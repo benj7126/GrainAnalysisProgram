@@ -1,0 +1,22 @@
+# --- GUI Framework ---
+PyQt6>=6.10.0
+
+# --- Database & Hardware ---
+SQLAlchemy>=2.0.44
+mysqlclient==2.2.4
+pyserial==3.5
+
+# --- Data Analysis & Math ---
+pandas>=2.3.3
+numpy>=2.3.5
+openpyxl>=3.1.5
+pgeocode==0.5.0
+
+# --- Reports & PDF Generation ---
+matplotlib>=3.10.7
+reportlab>=4.4.5
+svglib>=1.6.0
+
+# --- Windows System Integration ---
+pywin32==311
+python-dotenv
