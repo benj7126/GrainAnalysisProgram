@@ -293,7 +293,7 @@ class NR_Screen(NR_D_Screen):
         footer_layout.addWidget(QLabel("Sum:"))
         self.sieve_sum = QLineEdit()
         self.sieve_sum.setEnabled(False)
-        self.sieve_sum.setMaximumWidth(30)
+        self.sieve_sum.setMaximumWidth(40)
         footer_layout.addWidget(self.sieve_sum)
         footer_layout.addSpacerItem(QSpacerItem(20, 0))
 
@@ -480,7 +480,7 @@ class ScaleThread(QThread):
 
                         parts = line.split()
                                 
-                        if len(parts) == 2 and parts[1] == 'g':
+                        if parts[0] == 'Tare:':
                             result = parts[0]
                             self.weight_received.emit(result) # if response is wanted, remove dis line.
 

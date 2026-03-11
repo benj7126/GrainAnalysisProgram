@@ -59,7 +59,7 @@ class NR_D_Screen(QWidget):
         acutal_sum = (item_sum + conv(self.dust_input.text()))
         
         if hasattr(self, "sieve_sum"):
-            self.sieve_sum.setText(stringify(acutal_sum))
+            self.sieve_sum.setText(stringify(round(acutal_sum, 1)))
 
             if acutal_sum >= 99.5 and acutal_sum <= 100.5:
                 self.sieve_sum.setStyleSheet(
