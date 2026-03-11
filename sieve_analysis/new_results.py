@@ -481,7 +481,7 @@ class ScaleThread(QThread):
                         parts = line.split()
                                 
                         if parts[0] == 'Tare:':
-                            result = parts[0]
+                            result = parts[1]
                             self.weight_received.emit(result) # if response is wanted, remove dis line.
 
 #                        if "Verified By:" in line:
