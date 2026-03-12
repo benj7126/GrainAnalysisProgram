@@ -478,10 +478,12 @@ class ScaleThread(QThread):
                     if self.ser.in_waiting > 0:
                         line = self.ser.readline().decode('ascii').strip()
 
+                        print(line)
+
                         parts = line.split()
-                                
-                        if parts[0] == 'Tare:':
-                            result = parts[1]
+
+                        if len(parts) > 0 and parts[1] == 'g':
+                            result = parts[0]
                             self.weight_received.emit(result) # if response is wanted, remove dis line.
 
 #                        if "Verified By:" in line:
@@ -515,3 +517,6 @@ class ScaleThread(QThread):
 # Tare:        0.0     g    T
 # Signature:____________
 # Verified By:____________
+
+# can also have...
+# 9.9     g    N
