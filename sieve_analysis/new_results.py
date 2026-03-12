@@ -482,7 +482,7 @@ class ScaleThread(QThread):
 
                         parts = line.split()
 
-                        if len(parts) > 0 and parts[1] == 'g':
+                        if len(parts) > 1 and parts[1] == 'g':
                             result = parts[0]
                             self.weight_received.emit(result) # if response is wanted, remove dis line.
 
