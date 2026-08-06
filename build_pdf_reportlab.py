@@ -15,6 +15,11 @@ from PyQt6.QtPdfWidgets import QPdfView
 
 def get_header(data):
     logo = Image("pdf/logo.png")
+    target_height = 24 * mm
+
+    aspect = logo.imageWidth / float(logo.imageHeight)
+    logo.drawHeight = target_height
+    logo.drawWidth = target_height * aspect
 
     header_data = [
         [logo, Paragraph(f"<para align='right'>{data['date']}</para>", getSampleStyleSheet()['Normal'])]

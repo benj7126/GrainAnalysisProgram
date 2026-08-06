@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (
     QWidget
 )
-from local_data import products, customers
+from local_data import customers
 
 from general_methods import stringify, conv
 
@@ -17,23 +17,6 @@ class NR_D_Screen(QWidget):
         self.current_batch_iid = None
 
         self.init_ui()
-
-    def update_product_id_combo(self):
-        self.product_id_combo.blockSignals(True)
-        self.product_name.setText("")
-
-        self.product_id_combo.clear()
-        self.product_list = sorted(products.keys())
-        self.product_id_combo.addItems(self.product_list)
-
-        if self.current_product_id == None:
-            new_index = -1
-        else:
-            new_index = self.product_id_combo.findText(self.current_product_id)
-            
-        self.product_id_combo.setCurrentIndex(new_index)
-        
-        self.product_id_combo.blockSignals(False)
 
     def update_customer_combo(self):
         self.customer_input.blockSignals(True)

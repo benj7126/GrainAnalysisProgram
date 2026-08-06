@@ -17,6 +17,9 @@ from general_methods import conv, stringify, signals_blocked, get_list_item_or_n
 from .shared import NR_D_Screen
 
 sieves = [16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.9, "Bund"]
+
+all_batches = "[Alle Batches]"
+
 class D_Screen(NR_D_Screen):
     def __init__(self, main_window_ref, parent=None):
         super().__init__(main_window_ref, parent)
@@ -55,17 +58,39 @@ class D_Screen(NR_D_Screen):
 
         build_pdf(data)
 
+    def update_product_id_combo(self):
+        self.product_id_combo.blockSignals(True)
+        self.product_name.setText("")
+
+        self.product_id_combo.clear()
+        self.product_list = [all_batches]
+        self.product_list.extend(sorted(products.keys()))
+        self.product_id_combo.addItems(self.product_list)
+
+        if self.current_product_id == None:
+            new_index = -1
+        else:
+            new_index = self.product_id_combo.findText(self.current_product_id)
+            
+        self.product_id_combo.setCurrentIndex(new_index)
+        
+        self.product_id_combo.blockSignals(False)
+
     def update_id_combo(self):
         if not self.current_product_id: return
 
-        if self.current_product_id not in products:
+        if self.current_product_id not in products and self.current_product_id != all_batches:
             self.batch_id.clear(); self.batch_iid.clear(); self.current_product_id = None; return
 
         with signals_blocked(self.batch_id):
             saved = self.batch_id.currentText()
 
             self.batch_id.clear()
-            self.batch_list = sorted(products[self.current_product_id]["batches"])
+            if self.current_product_id != all_batches:
+                self.batch_list = sorted(products[self.current_product_id]["batches"])
+            else:
+                self.batch_list = sorted([batch for product in products.values() for batch in product["batches"]])
+
             self.batch_id.addItems(self.batch_list)
 
             if saved in self.batch_list:
@@ -138,6 +163,8 @@ class D_Screen(NR_D_Screen):
                         session.delete(batch_sieve)
 
                     session.delete(batch)
+
+                session.commit()
             finally:
                 session.close()
 
@@ -149,8 +176,7 @@ class D_Screen(NR_D_Screen):
         
         with get_session() as session:
             try:
-                batch = session.query(Batch).filter_by(product_id=self.current_product_id,
-                                                       batch_id=self.current_batch_id,
+                batch = session.query(Batch).filter_by(batch_id=self.current_batch_id,
                                                        batch_iid=self.current_batch_iid).first()
                 
                 update_lambda(batch)
@@ -165,8 +191,7 @@ class D_Screen(NR_D_Screen):
         
         with get_session() as session:
             try:
-                batches = session.query(Batch).filter_by(product_id=self.current_product_id,
-                                                       batch_id=self.current_batch_id).all()
+                batches = session.query(Batch).filter_by(batch_id=self.current_batch_id).all()
                 
                 for batch in batches:
                     update_lambda(batch)
@@ -223,12 +248,23 @@ class D_Screen(NR_D_Screen):
         self.current_product_id = get_list_item_or_none(self.product_list, product_index)
         if not self.current_product_id: return
 
+        if self.current_product_id != all_batches:
+            self.update_limits_for(self.current_product_id)
+        
+        self.update_id_combo()
+
+    def update_limits_for(self, id):
+        print("update for: " + id)
         with get_session() as session:
             try:
-                product = session.query(Product).filter_by(product_id=self.current_product_id).first()
-                
-                self.product_name.setText(product.product_name)
-                for sieve_limit in session.query(ProductSieve).filter_by(product_id=self.current_product_id).all():
+                product = session.query(Product).filter_by(product_id=id).first()
+
+                product_name = product.product_name
+                if self.current_product_id == all_batches:
+                    product_name = id + " | " + product_name
+
+                self.product_name.setText(product_name)
+                for sieve_limit in session.query(ProductSieve).filter_by(product_id=id).all():
                     list = self.sieve_items[sieve_limit.sieve.value]
 
                     with signals_blocked(list[2]):
@@ -236,8 +272,6 @@ class D_Screen(NR_D_Screen):
 
                     with signals_blocked(list[3]):
                         list[3].setText(stringify(sieve_limit.upper_bound_percentage))
-
-                self.update_id_combo()
 
                 session.commit()
             finally:
@@ -254,6 +288,21 @@ class D_Screen(NR_D_Screen):
         self.current_batch_id = get_list_item_or_none(self.batch_list, batch_index)
 
         if not self.current_batch_id: return
+
+        tmp_product_limits = None;
+        if self.current_product_id == all_batches:
+            with get_session() as session:
+                try:
+                    batch = session.query(Batch).filter_by(batch_id=self.current_batch_id).first()
+                    
+                    tmp_product_limits = batch.product_id
+                finally:
+                    session.close()
+
+            if tmp_product_limits:
+                self.update_limits_for(tmp_product_limits)
+            else:
+                self.clear_product_values()
 
         # self.clear_batch_values()
 
@@ -278,12 +327,10 @@ class D_Screen(NR_D_Screen):
         
         with get_session() as session:
             try:
-                batch = session.query(Batch).filter_by(product_id=self.current_product_id,
-                                                       batch_id=self.current_batch_id,
+                batch = session.query(Batch).filter_by(batch_id=self.current_batch_id,
                                                        batch_iid=self.current_batch_iid).first()
                 
-                batches = session.query(Batch).filter_by(product_id=self.current_product_id,
-                                                       batch_id=self.current_batch_id).all()
+                # batches = session.query(Batch).filter_by(batch_id=self.current_batch_id).all()
                 
                 sieve_results = session.query(BatchSieve).filter_by(batch_id=self.current_batch_id,
                                                                           batch_iid=self.current_batch_iid).all()

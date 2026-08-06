@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import QDate, Qt, QThread, pyqtSignal, pyqtSlot
 from sql import get_session, BatchSieve, Batch, ProductSieve, Product, SieveSize
-from local_data import add_product_event, add_product_sieve_event, add_customer_event, batches, addReloadEvent
+from local_data import add_product_event, add_product_sieve_event, add_customer_event, batches, addReloadEvent, products
 
 from comma_dot_verify import CommaDotDoubleValidator
 
@@ -32,6 +32,23 @@ class NR_Screen(NR_D_Screen):
         self.batch_dialog.setWindowTitle("Genbrugt batch id")
         self.batch_dialog.setOkButtonText("Opret") # Set the text for the OK button
         self.batch_dialog.setCancelButtonText("Annuler") # Set the text for the Cancel button
+
+    def update_product_id_combo(self):
+        self.product_id_combo.blockSignals(True)
+        self.product_name.setText("")
+
+        self.product_id_combo.clear()
+        self.product_list = sorted(products.keys())
+        self.product_id_combo.addItems(self.product_list)
+
+        if self.current_product_id == None:
+            new_index = -1
+        else:
+            new_index = self.product_id_combo.findText(self.current_product_id)
+            
+        self.product_id_combo.setCurrentIndex(new_index)
+        
+        self.product_id_combo.blockSignals(False)
                 
     def clear_product_values(self):
         for col in self.sieve_items:
@@ -52,6 +69,8 @@ class NR_Screen(NR_D_Screen):
 
         self.production_area_1.setChecked(False)
         self.production_area_2.setChecked(False)
+
+        self.sieve_items[0][0].setText("0")
 
     def batch_lock_production_area(self):
         if self.batch_id.text() in batches:
@@ -76,6 +95,11 @@ class NR_Screen(NR_D_Screen):
                 self.production_area_1.setChecked(False)
                 self.production_area_2.setChecked(False)
 
+    def on_product_text_changed(self, text):
+        if not text in self.product_list:
+            self.clear_product_values()
+        else:
+            self.on_product_index_changed(self.product_list.index(text))
     
     def on_product_index_changed(self, change):
         self.current_product_id = self.product_list[change]
@@ -200,6 +224,7 @@ class NR_Screen(NR_D_Screen):
         self.product_id_combo = QComboBox()
         self.product_id_combo.setEditable(True)
 
+        self.product_id_combo.currentTextChanged.connect(self.on_product_text_changed)
         self.product_id_combo.currentIndexChanged.connect(self.on_product_index_changed)
         
         form_layout.addWidget(self.product_id_combo, 0, 1)
@@ -241,8 +266,12 @@ class NR_Screen(NR_D_Screen):
                 line_edit.setEnabled(False)
             elif col == 1:
                 line_edit.editingFinished.connect(lambda: self.update_fall_through())
+
+            if row == 1:
+                line_edit.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         
         sieve_widget, self.sieve_items = newSieve(headers, 80, dissableCols)
+        self.sieve_items[0][0].setText("0")
 
 
         def reflect_product_sieve_change(sieve_limit):
@@ -272,13 +301,16 @@ class NR_Screen(NR_D_Screen):
         button_layout.addStretch(1)
         new_batch = QPushButton("Gem")
         new_batch.clicked.connect(self.save_batch)
+        new_batch.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         button_layout.addWidget(new_batch)
         clear = QPushButton("Ryd")
         clear.clicked.connect(self.clear_product_values)
         clear.clicked.connect(self.clear_batch_values)
+        clear.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         button_layout.addWidget(clear)
 
         see_curve = QPushButton("Se kurve")
+        see_curve.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         button_layout.addWidget(see_curve)
         see_curve.clicked.connect(lambda: createCurve([conv(sieve_row[1].text()) for sieve_row in self.sieve_items[::-1]],
                                                       [conv(sieve_row[2].text()) for sieve_row in self.sieve_items[::-1]],
@@ -316,6 +348,7 @@ class NR_Screen(NR_D_Screen):
         
         footer_layout.addWidget(QLabel("Vægt-status:"))
         self.weight_connect = QPushButton("Ikke forbundet")
+        self.weight_connect.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         self.weight_connect.setFixedWidth(100)
 
         def tryConnectScale(button):
@@ -360,6 +393,7 @@ class NR_Screen(NR_D_Screen):
         self.date_edit.setDisplayFormat("yyyy.MM.dd")
         self.date_edit.setCalendarPopup(True)
         self.date_edit.setFixedWidth(120)
+        self.date_edit.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
         batch_and_date_layout.addWidget(self.date_edit)
 
         batch_date_widget = QWidget()
